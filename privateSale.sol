@@ -660,7 +660,7 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
     mapping(address => investorData) public _investorData;
     mapping(uint256 => roundDatas) public _roundDatas;
 
-        
+    event NewBuying(address indexed investorAddress, uint256 amount, uint256 time);    
     
     address[] public allParticipantAddresses;
     address[] public whitelistedAddresses;
@@ -711,6 +711,7 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
         investor.totalBuyingAmountToken = investor.totalBuyingAmountToken.add(totalTokenAmount);
         totalSoldAmountToken = totalSoldAmountToken.add(totalTokenAmount);
         totalSoldAmountBNB = totalSoldAmountBNB.add(_value);
+        emit NewBuying(msg.sender, _value, block.timestamp);
     }
     
     function withdrawBusd() external nonReentrant onlyOwner {
@@ -728,7 +729,6 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
     }
     
     function claimTokens() external nonReentrant {
-        
         require(block.timestamp >= lockTime);
         investorData storage investor = _investorData[msg.sender];
         require(investor.isWhitelisted);
