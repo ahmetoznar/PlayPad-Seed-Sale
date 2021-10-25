@@ -642,7 +642,9 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
     uint256 public totalSellAmountToken;
     uint256 public totalSoldAmountToken;
     uint256 public totalSoldAmountBNB;
-
+    uint256 public minBuyValue;
+    uint256 public currentNumber;
+  
     struct roundDatas {
         uint256 roundStartDate;
         uint256 roundPercent;
@@ -671,7 +673,12 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
         bool _contractStatus,
         uint256 _lockTime,
         uint256 _totalSellAmountToken,
-        uint256 _hardcap
+        uint256 _hardcap,
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _maxParticipantCount,
+        uint256 _maxBuyValue,
+        uint256 _minBuyValue
     ) public{
       saleToken = _saleToken;
       busdToken = _busdToken;
@@ -679,6 +686,11 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
       lockTime = _lockTime;
       totalSellAmountToken = _totalSellAmountToken;
       hardcap = _hardcap;
+      startTime = _startTime;
+      endTime = _endTime;
+      maxParticipantCount = _maxParticipantCount;
+      maxBuyValue = _maxBuyValue;
+      minBuyValue = _minBuyValue;
     }
     
      modifier isContractActive() {
@@ -686,7 +698,6 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
         _;
     }
     
-   
     
     function changeContractStatus(bool status) external nonReentrant onlyOwner {
         contractStatus = status;
@@ -701,22 +712,45 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
     }
     
      
-    function buyTokens(uint256 _value) public nonReentrant isContractActive {
+    function buyTokens(uint256 _value) external nonReentrant isContractActive {
         investorData storage investor = _investorData[msg.sender];
-        require(investor.isWhitelisted);
-        require(hardcap <= hardcap.add(_value));
-        require(busdToken.transferFrom(msg.sender, address(this), _value));
+        require(_value <= maxBuyValue, "limit exceeded");
+        require(_value >= minBuyValue, "you must buy more than min. limit.");
+        require(block.timestamp >= startTime, "Sale Started");
+        require(block.timestamp <= endTime, "Sale Ended");
+        require(maxParticipantCount >= currentNumber, "Sale Filled");
+        require(investor.isWhitelisted, "You are not whitelisted");
+        require(hardcap >= totalSoldAmountBNB.add(_value), "hardcap value exceed");
+        require(busdToken.transferFrom(msg.sender, address(this), _value), "bad transfer");
         uint256 totalTokenAmount = calculateTokenAmount(_value);
         investor.totalBuyingAmountBNB = investor.totalBuyingAmountBNB.add(_value);
         investor.totalBuyingAmountToken = investor.totalBuyingAmountToken.add(totalTokenAmount);
         totalSoldAmountToken = totalSoldAmountToken.add(totalTokenAmount);
         totalSoldAmountBNB = totalSoldAmountBNB.add(_value);
+        allParticipantAddresses.push(msg.sender);
+        currentNumber = currentNumber.add(1);
         emit NewBuying(msg.sender, _value, block.timestamp);
     }
     
     function withdrawBusd() external nonReentrant onlyOwner {
         uint256 valueBusd = busdToken.balanceOf(address(this));
         busdToken.transfer(msg.sender, valueBusd);
+    }
+    
+    function changeLockTime(uint256 _lockTime) external nonReentrant onlyOwner {
+        lockTime = _lockTime;
+    }
+
+    function changeStartTime(uint256 _startTime) external nonReentrant onlyOwner {
+        startTime = _startTime;
+    }
+    
+    function changeFinishTime(uint256 _finishTime) external nonReentrant onlyOwner {
+        endTime = _finishTime;
+    }
+    
+     function changeMaxBuyAmount(uint256 _amount) external nonReentrant onlyOwner {
+        maxBuyValue = _amount;
     }
     
      function withdrawTokens() external nonReentrant onlyOwner {
