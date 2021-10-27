@@ -715,6 +715,7 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
     function buyTokens(uint256 _value) external nonReentrant isContractActive {
         investorData storage investor = _investorData[msg.sender];
         require(_value <= maxBuyValue, "limit exceeded");
+        require(maxBuyValue >= investor.totalBuyingAmountUsd.add(busdAmount), "User limit exceeded");
         require(_value >= minBuyValue, "you must buy more than min. limit.");
         require(block.timestamp >= startTime, "Sale Started");
         require(block.timestamp <= endTime, "Sale Ended");
