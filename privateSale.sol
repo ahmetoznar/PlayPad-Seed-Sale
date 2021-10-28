@@ -769,6 +769,7 @@ contract PlayPadSaleSeed is ReentrancyGuard, Ownable {
         require(investor.isWhitelisted);
         uint256 investorRoundNumber = investor.claimRound;
         roundDatas storage roundDetail = _roundDatas[investorRoundNumber];
+        require(roundDetail.roundStartDate != 0, "Claim rounds are not available yet.");
         require(block.timestamp >= roundDetail.roundStartDate, "bad claim round date");
         uint256 tcl = investor.claimedValue.add(investor.totalBuyingAmountToken.mul(roundDetail.roundPercent).div(100));
         require(investor.totalBuyingAmountToken >= tcl);
