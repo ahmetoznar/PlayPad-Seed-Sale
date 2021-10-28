@@ -624,7 +624,7 @@ library SafeMath {
 }
 
 
-contract PlayPadClaimContract is ReentrancyGuard, Ownable {
+contract PlayPadClaimContractMemeHunter is ReentrancyGuard, Ownable {
     
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -676,6 +676,9 @@ contract PlayPadClaimContract is ReentrancyGuard, Ownable {
         contractStatus = status;
     }
   
+    function changeTotalSellAmount(uint256 _value) external onlyOwner nonReentrant {
+        totalSellAmountToken = _value;
+    }
     
 
      function withdrawTokens() external nonReentrant onlyOwner {
